@@ -5,7 +5,6 @@ import com.github.forax.htmlcomponent.ComponentRegistry;
 import com.github.forax.htmlcomponent.Renderer;
 
 import javax.xml.stream.XMLStreamException;
-import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
 import static java.lang.invoke.MethodHandles.lookup;

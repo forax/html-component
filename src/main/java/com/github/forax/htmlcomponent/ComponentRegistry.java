@@ -2,7 +2,6 @@ package com.github.forax.htmlcomponent;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.RecordComponent;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Arrays;
@@ -10,6 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+
+import static java.lang.invoke.MethodType.methodType;
 
 public final class ComponentRegistry {
   private final ConcurrentHashMap<String, Function<Map<String, Object>, Component>> registry = new ConcurrentHashMap<>();
@@ -27,6 +28,8 @@ public final class ComponentRegistry {
   }
 
   public void registerFactory(String name, Function<Map<String, Object>, Component> componentFactory) {
+    Objects.requireNonNull(name);
+    Objects.requireNonNull(componentFactory);
     if (registry.putIfAbsent(name, componentFactory) != null) {
       throw new IllegalStateException("a component with the name " + name + " is already registered");
     }
@@ -47,9 +50,9 @@ public final class ComponentRegistry {
         .toArray(Class<?>[]::new);
     MethodHandle constructor;
     try {
-      constructor = lookup.findConstructor(recordClass, MethodType.methodType(void.class, parameterTypes))
+      constructor = lookup.findConstructor(recordClass, methodType(void.class, parameterTypes))
           .asSpreader(Object[].class, parameterTypes.length)
-          .asType(MethodType.methodType(Component.class, Object[].class));
+          .asType(methodType(Component.class, Object[].class));
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw new IllegalStateException(e);
     }
