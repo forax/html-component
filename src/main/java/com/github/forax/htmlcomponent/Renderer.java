@@ -8,13 +8,13 @@ import java.io.Writer;
 import java.util.function.Consumer;
 
 public interface Renderer {
-  void advance(ComponentRegistry registry, Consumer<XMLEvent> consumer);
+  void advance(Component.Resolver resolver, Consumer<XMLEvent> consumer);
 
-  default void toWriter(ComponentRegistry registry, Writer writer) {
+  default void toWriter(Component.Resolver resolver, Writer writer) {
     try {
       var eventWriter = XMLOutputFactory.newFactory().createXMLEventWriter(writer);
       try {
-        advance(registry, event -> {
+        advance(resolver, event -> {
           try {
             eventWriter.add(event);
           } catch (XMLStreamException e) {
@@ -35,9 +35,9 @@ public interface Renderer {
     }
   }
 
-  default String toString(ComponentRegistry registry) {
+  default String toString(Component.Resolver resolver) {
     var writer = new StringWriter();
-    toWriter(registry, writer);
+    toWriter(resolver, writer);
     return writer.toString();
   }
 }

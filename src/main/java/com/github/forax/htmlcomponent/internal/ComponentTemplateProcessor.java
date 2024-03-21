@@ -1,6 +1,5 @@
 package com.github.forax.htmlcomponent.internal;
 
-import com.github.forax.htmlcomponent.ComponentRegistry;
 import com.github.forax.htmlcomponent.Renderer;
 
 import javax.xml.stream.XMLEventFactory;
@@ -21,11 +20,52 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 public final class ComponentTemplateProcessor implements StringTemplate.Processor<Renderer, RuntimeException> {
+  private static final Pattern HOLE = Pattern.compile("\\$hole([0-9]+)\\$");
+
+  private static boolean startsWithAnUpperCase(String name) {
+    if (name.isEmpty()) {
+      return false;
+    }
+    return Character.isUpperCase(name.charAt(0));
+  }
+
+  private record AttributeRewriterIterator(Iterator<Attribute> iterator,
+                                           List<Object> values) implements Iterator<Attribute> {
+    @Override
+    public boolean hasNext() {
+      return iterator.hasNext();
+    }
+
+    @Override
+    public Attribute next() {
+      var attribute = iterator.next();
+      var value = attribute.getValue();
+      var matcher = HOLE.matcher(value);
+      if (matcher.matches()) {
+        var index = Integer.parseInt(matcher.group(1));
+        return new ValueAttribute(attribute, values.get(index));
+      }
+      return attribute;
+    }
+  }
+
+  private static Map<String, Object> asAttributeMap(Iterator<Attribute> iterator) {
+    var map = new LinkedHashMap<String, Object>();
+    while (iterator.hasNext()) {
+      var attribute = iterator.next();
+      var name = attribute.getName().getLocalPart();
+      map.put(name, switch (attribute) {
+        case ValueAttribute valueAttribute -> valueAttribute.value();
+        case Attribute _ -> attribute.getValue();
+      });
+    }
+    return Collections.unmodifiableMap(map);
+  }
+
   @Override
   public Renderer process(StringTemplate stringTemplate) throws RuntimeException {
     var fragments = stringTemplate.fragments();
@@ -44,89 +84,37 @@ public final class ComponentTemplateProcessor implements StringTemplate.Processo
     }
     var eventFactory = XMLEventFactory.newDefaultFactory();
 
-    return new Renderer() {
-      private static final Pattern HOLE = Pattern.compile("\\$hole([0-9]+)\\$");
-
-      private static boolean startsWithAnUpperCase(String name) {
-        if (name.isEmpty()) {
-          return false;
+    return (resolver, consumer) -> {
+      while(reader.hasNext()) {
+        XMLEvent event;
+        try {
+          event = reader.nextEvent();
+        } catch (XMLStreamException e) {
+          throw new NoSuchElementException(e);
         }
-        return Character.isUpperCase(name.charAt(0));
-      }
-
-      private static final class AttributeRewriterIterator implements Iterator<Attribute> {
-        private final Iterator<Attribute> iterator;
-        private final List<Object> values;
-
-        private AttributeRewriterIterator(Iterator<Attribute> iterator, List<Object> values) {
-          this.iterator = iterator;
-          this.values = values;
-        }
-
-        @Override
-        public boolean hasNext() {
-          return iterator.hasNext();
-        }
-
-        @Override
-        public Attribute next() {
-          var attribute = iterator.next();
-          var value = attribute.getValue();
-          var matcher = HOLE.matcher(value);
-          if (matcher.matches()) {
-            var index = Integer.parseInt(matcher.group(1));
-            return new ValueAttribute(attribute, values.get(index));
+        switch (event) {
+          case StartDocument _, EndDocument _ -> {}
+          case Characters characters -> {
+            var text1 = HOLE.matcher(characters.getData())
+                .replaceAll(result -> {
+                  var index = Integer.parseInt(result.group(1));
+                  return String.valueOf(values.get(index));
+                });
+            consumer.accept(eventFactory.createCharacters(text1));
           }
-          return attribute;
-        }
-      }
-
-      private static Map<String, Object> asAttributeMap(Iterator<Attribute> iterator) {
-        var map = new LinkedHashMap<String, Object>();
-        while (iterator.hasNext()) {
-          var attribute = iterator.next();
-          var name = attribute.getName().getLocalPart();
-          map.put(name, switch (attribute) {
-            case ValueAttribute valueAttribute -> valueAttribute.value();
-            case Attribute _ -> attribute.getValue();
-          });
-        }
-        return Collections.unmodifiableMap(map);
-      }
-
-      @Override
-      public void advance(ComponentRegistry registry, Consumer<XMLEvent> consumer) {
-        while(reader.hasNext()) {
-          XMLEvent event;
-          try {
-            event = reader.nextEvent();
-          } catch (XMLStreamException e) {
-            throw new NoSuchElementException(e);
-          }
-          switch (event) {
-            case StartDocument _, EndDocument _ -> {}
-            case Characters characters -> {
-              var text = HOLE.matcher(characters.getData())
-                  .replaceAll(result -> {
-                    var index = Integer.parseInt(result.group(1));
-                    return String.valueOf(values.get(index));
-                  });
-              consumer.accept(eventFactory.createCharacters(text));
+          case StartElement startElement -> {
+            var name = startElement.getName().getLocalPart();
+            var attributeIterator = new AttributeRewriterIterator(startElement.getAttributes(), values);
+            if (startsWithAnUpperCase(name)) {
+              var component = resolver.getComponent(name, asAttributeMap(attributeIterator));
+              component.render().advance(resolver, consumer);
+            } else {
+              var newEvent = eventFactory.createStartElement(startElement.getName(), attributeIterator, startElement.getNamespaces());
+              consumer.accept(newEvent);
             }
-            case StartElement startElement -> {
-              var name = startElement.getName().getLocalPart();
-              var attributeIterator = new AttributeRewriterIterator(startElement.getAttributes(), values);
-              if (startsWithAnUpperCase(name)) {
-                var component = registry.getComponent(name, asAttributeMap(attributeIterator));
-                component.render().advance(registry, consumer);
-              } else {
-                var newEvent = eventFactory.createStartElement(startElement.getName(), attributeIterator, startElement.getNamespaces());
-                consumer.accept(newEvent);
-              }
-            }
-            case EndElement endElement when startsWithAnUpperCase(endElement.getName().getLocalPart()) -> {}
-            default -> consumer.accept(event);
           }
+          case EndElement endElement when startsWithAnUpperCase(endElement.getName().getLocalPart()) -> {}
+          default -> consumer.accept(event);
         }
       }
     };

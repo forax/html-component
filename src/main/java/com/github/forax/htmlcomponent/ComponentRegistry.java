@@ -12,7 +12,7 @@ import java.util.function.Function;
 
 import static java.lang.invoke.MethodType.methodType;
 
-public final class ComponentRegistry {
+public final class ComponentRegistry implements Component.Resolver {
   private final ConcurrentHashMap<String, Function<Map<String, Object>, Component>> registry = new ConcurrentHashMap<>();
 
   public ComponentRegistry() {}
