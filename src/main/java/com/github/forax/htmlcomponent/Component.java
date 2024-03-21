@@ -1,5 +1,7 @@
 package com.github.forax.htmlcomponent;
 
+import javax.xml.namespace.QName;
+import javax.xml.stream.Location;
 import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -12,6 +14,7 @@ import javax.xml.stream.events.StartDocument;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.StringReader;
+import java.io.Writer;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -22,9 +25,10 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
-public interface Component {
-  Map<String, Object> attributes();
+import static com.github.forax.htmlcomponent.ComponentRegistry.getRegistry;
 
+@FunctionalInterface
+public interface Component {
   Renderer render();
 
   StringTemplate.Processor<Renderer, RuntimeException> $ = stringTemplate -> {
@@ -45,6 +49,108 @@ public interface Component {
     var eventFactory = XMLEventFactory.newDefaultFactory();
 
     return new Renderer() {
+      private record ValueAttribute(Attribute attribute, Object value) implements Attribute {
+        @Override
+        public QName getName() {
+          return attribute.getName();
+        }
+
+        @Override
+        public String getValue() {
+          return String.valueOf(value);
+        }
+
+        @Override
+        public String getDTDType() {
+          return attribute.getDTDType();
+        }
+
+        @Override
+        public boolean isSpecified() {
+          return attribute.isSpecified();
+        }
+
+        @Override
+        public int getEventType() {
+          return attribute.getEventType();
+        }
+
+        @Override
+        public Location getLocation() {
+          return attribute.getLocation();
+        }
+
+        @Override
+        public boolean isStartElement() {
+          return attribute.isStartElement();
+        }
+
+        @Override
+        public boolean isAttribute() {
+          return attribute.isAttribute();
+        }
+
+        @Override
+        public boolean isNamespace() {
+          return attribute.isNamespace();
+        }
+
+        @Override
+        public boolean isEndElement() {
+          return attribute.isEndElement();
+        }
+
+        @Override
+        public boolean isEntityReference() {
+          return attribute.isEntityReference();
+        }
+
+        @Override
+        public boolean isProcessingInstruction() {
+          return attribute.isProcessingInstruction();
+        }
+
+        @Override
+        public boolean isCharacters() {
+          return attribute.isCharacters();
+        }
+
+        @Override
+        public boolean isStartDocument() {
+          return attribute.isStartDocument();
+        }
+
+        @Override
+        public boolean isEndDocument() {
+          return attribute.isEndDocument();
+        }
+
+        @Override
+        public StartElement asStartElement() {
+          return attribute.asStartElement();
+        }
+
+        @Override
+        public EndElement asEndElement() {
+          return attribute.asEndElement();
+        }
+
+        @Override
+        public Characters asCharacters() {
+          return attribute.asCharacters();
+        }
+
+        @Override
+        public QName getSchemaType() {
+          return attribute.getSchemaType();
+        }
+
+        @Override
+        public void writeAsEncodedUnicode(Writer writer) throws XMLStreamException {
+          attribute.writeAsEncodedUnicode(writer);
+        }
+      }
+
       private static final Pattern HOLE = Pattern.compile("\\$hole([0-9]+)\\$");
 
       private static boolean startsWithAnUpperCase(String name) {
@@ -117,7 +223,7 @@ public interface Component {
               var name = startElement.getName().getLocalPart();
               var attributeIterator = new AttributeRewriterIterator(startElement.getAttributes(), values);
               if (startsWithAnUpperCase(name)) {
-                var component = ComponentRegistry.REGISTRY.getComponent(name, asAttributeMap(attributeIterator));
+                var component = getRegistry().getComponent(name, asAttributeMap(attributeIterator));
                 component.render().advance(consumer);
               } else {
                 var newEvent = eventFactory.createStartElement(startElement.getName(), attributeIterator, startElement.getNamespaces());

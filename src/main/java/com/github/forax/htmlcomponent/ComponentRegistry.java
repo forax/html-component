@@ -3,16 +3,22 @@ package com.github.forax.htmlcomponent;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.RecordComponent;
 import java.lang.reflect.UndeclaredThrowableException;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public final class ComponentRegistry {
-  public static final ComponentRegistry REGISTRY = new ComponentRegistry();
+  private static final ComponentRegistry REGISTRY = new ComponentRegistry();
 
-  private final HashMap<String, Function<Map<String, Object>, Component>> registry = new HashMap<>();
+  public static ComponentRegistry getRegistry() {
+    return REGISTRY;
+  }
+
+  private final ConcurrentHashMap<String, Function<Map<String, Object>, Component>> registry = new ConcurrentHashMap<>();
 
   private ComponentRegistry() {}
 
@@ -26,7 +32,7 @@ public final class ComponentRegistry {
     return componentFactory.apply(attributes);
   }
 
-  private void registerFactory(String name, Function<Map<String, Object>, Component> componentFactory) {
+  public void registerFactory(String name, Function<Map<String, Object>, Component> componentFactory) {
     if (registry.putIfAbsent(name, componentFactory) != null) {
       throw new IllegalStateException("a component with the name " + name + " is already registered");
     }
@@ -35,25 +41,31 @@ public final class ComponentRegistry {
   public void register(Lookup lookup, Class<? extends Record> recordClass) {
     Objects.requireNonNull(lookup);
     Objects.requireNonNull(recordClass);
-    for(var recordComponent : recordClass.getRecordComponents()) {
-      if (!recordComponent.getName().equals("attributes")) {
-        throw new IllegalStateException("the record should have a component named attributes");
-      }
-      if (recordComponent.getType() != Map.class) {
-        throw new IllegalStateException("the record attributes should be a Map<String, Object>");
-      }
-      // TODO more
+    var recordComponents = recordClass.getRecordComponents();
+    if (recordComponents == null) {
+      throw new IllegalArgumentException("invalid record class " + recordClass.getName());
     }
+    var parameterNames = Arrays.stream(recordComponents)
+        .map(RecordComponent::getName)
+        .toArray(String[]::new);
+    var parameterTypes = Arrays.stream(recordComponents)
+        .map(RecordComponent::getType)
+        .toArray(Class<?>[]::new);
     MethodHandle constructor;
     try {
-      constructor = lookup.findConstructor(recordClass, MethodType.methodType(void.class, Map.class))
-          .asType(MethodType.methodType(Component.class, Map.class));
+      constructor = lookup.findConstructor(recordClass, MethodType.methodType(void.class, parameterTypes))
+          .asSpreader(Object[].class, parameterTypes.length)
+          .asType(MethodType.methodType(Component.class, Object[].class));
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw new IllegalStateException(e);
     }
     registerFactory(recordClass.getSimpleName(), attributes -> {
+      var array = new Object[parameterNames.length];
+      for(var i = 0; i < array.length; i++) {
+        array[i] = attributes.get(parameterNames[i]);
+      }
       try {
-        return (Component) constructor.invokeExact(attributes);
+        return (Component) constructor.invokeExact(array);
       } catch (RuntimeException | Error e) {
         throw e;
       } catch (Throwable e) {

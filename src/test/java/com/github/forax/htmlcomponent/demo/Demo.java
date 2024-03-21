@@ -7,21 +7,21 @@ import javax.xml.stream.XMLStreamException;
 import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
-import static com.github.forax.htmlcomponent.ComponentRegistry.REGISTRY;
+import static com.github.forax.htmlcomponent.ComponentRegistry.getRegistry;
 
 public class Demo {
 
-  record Product(Map<String, Object> attributes) implements Component {
+  record Product(String name, int price) implements Component {
     public Renderer render() {
       return $."""
           <row class=".product">
-            <td>\{ attributes.get("name") }</td><td>\{ ((int) attributes.get("price")) * 1.20 }</td>
+            <td>\{ name }</td><td>\{ price * 1.20 }</td>
           </row>
           """;
     }
   }
 
-  record App(Map<String, Object> attributes) implements Component {
+  record App() implements Component {
     public Renderer render() {
       return $."""
           <table>
@@ -34,9 +34,9 @@ public class Demo {
 
   public static void main(String[] args) throws XMLStreamException {
     var lookup = MethodHandles.lookup();
-    REGISTRY.register(lookup, App.class, Product.class);
+    getRegistry().register(lookup, App.class, Product.class);
 
-    var app = REGISTRY.getComponent("App", Map.of());
+    var app = getRegistry().getComponent("App", Map.of());
 
     System.out.println(app.render());
   }
