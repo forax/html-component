@@ -12,15 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public final class ComponentRegistry {
-  private static final ComponentRegistry REGISTRY = new ComponentRegistry();
-
-  public static ComponentRegistry getRegistry() {
-    return REGISTRY;
-  }
-
   private final ConcurrentHashMap<String, Function<Map<String, Object>, Component>> registry = new ConcurrentHashMap<>();
 
-  private ComponentRegistry() {}
+  public ComponentRegistry() {}
 
   public Component getComponent(String name, Map<String, Object> attributes) {
     Objects.requireNonNull(name);

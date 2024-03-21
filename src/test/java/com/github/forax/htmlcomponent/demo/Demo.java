@@ -1,13 +1,14 @@
 package com.github.forax.htmlcomponent.demo;
 
 import com.github.forax.htmlcomponent.Component;
+import com.github.forax.htmlcomponent.ComponentRegistry;
 import com.github.forax.htmlcomponent.Renderer;
 
 import javax.xml.stream.XMLStreamException;
 import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
-import static com.github.forax.htmlcomponent.ComponentRegistry.getRegistry;
+import static java.lang.invoke.MethodHandles.lookup;
 
 public class Demo {
 
@@ -33,11 +34,10 @@ public class Demo {
   }
 
   public static void main(String[] args) throws XMLStreamException {
-    var lookup = MethodHandles.lookup();
-    getRegistry().register(lookup, App.class, Product.class);
+    var registry = new ComponentRegistry();
+    registry.register(lookup(), App.class, Product.class);
 
-    var app = getRegistry().getComponent("App", Map.of());
-
-    System.out.println(app.render());
+    var app = registry.getComponent("App", Map.of());
+    System.out.println(app.render().toString(registry));
   }
 }

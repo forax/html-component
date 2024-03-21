@@ -25,8 +25,6 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
-import static com.github.forax.htmlcomponent.ComponentRegistry.getRegistry;
-
 @FunctionalInterface
 public interface Component {
   Renderer render();
@@ -201,7 +199,7 @@ public interface Component {
       }
 
       @Override
-      public void advance(Consumer<XMLEvent> consumer) {
+      public void advance(ComponentRegistry registry, Consumer<XMLEvent> consumer) {
         while(reader.hasNext()) {
           XMLEvent event;
           try {
@@ -223,8 +221,8 @@ public interface Component {
               var name = startElement.getName().getLocalPart();
               var attributeIterator = new AttributeRewriterIterator(startElement.getAttributes(), values);
               if (startsWithAnUpperCase(name)) {
-                var component = getRegistry().getComponent(name, asAttributeMap(attributeIterator));
-                component.render().advance(consumer);
+                var component = registry.getComponent(name, asAttributeMap(attributeIterator));
+                component.render().advance(registry, consumer);
               } else {
                 var newEvent = eventFactory.createStartElement(startElement.getName(), attributeIterator, startElement.getNamespaces());
                 consumer.accept(newEvent);
@@ -234,11 +232,6 @@ public interface Component {
             default -> consumer.accept(event);
           }
         }
-      }
-
-      @Override
-      public String toString() {
-        return pushToString();
       }
     };
   };
