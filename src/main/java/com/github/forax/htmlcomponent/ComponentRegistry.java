@@ -22,7 +22,7 @@ public final class ComponentRegistry implements Component.Resolver {
     Objects.requireNonNull(attributes);
     var componentFactory = registry.get(name);
     if (componentFactory == null) {
-      throw new IllegalStateException("unknown component " + name);
+      throw new IllegalStateException("unknown component factory for " + name);
     }
     return componentFactory.apply(attributes);
   }
