@@ -16,7 +16,7 @@ record Product(String name, int price) implements Component {
   }
 }
 
-record App() implements Component {
+record Cart() implements Component {
   public Renderer render() {
     var products = List.of(new Product("wood", 10), new Product("jade", 50));
     return $."""
@@ -31,6 +31,6 @@ void main() {
   var registry = new ComponentRegistry();
   registry.register(lookup(), Product.class);
 
-  var app = new App();
-  System.out.println(app.render().toString(registry));
+  var cart = new Cart();
+  System.out.println(cart.render().toString(registry));
 }

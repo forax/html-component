@@ -1,6 +1,7 @@
 import com.github.forax.htmlcomponent.Component;
 import com.github.forax.htmlcomponent.ComponentRegistry;
 import com.github.forax.htmlcomponent.Renderer;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
@@ -16,7 +17,7 @@ record Product(String name, int price) implements Component {
   }
 }
 
-record App() implements Component {
+record Cart() implements Component {
   public Renderer render() {
     return $."""
           <table>
@@ -29,8 +30,8 @@ record App() implements Component {
 
 void main() {
   var registry = new ComponentRegistry();
-  registry.register(lookup(), App.class, Product.class);
+  registry.register(lookup(), Cart.class, Product.class);
 
-  var app = registry.getComponent("App", Map.of());
-  System.out.println(app.render().toString(registry));
+  var cart = registry.getComponent("Cart", Map.of());
+  System.out.println(cart.render().toString(registry));
 }

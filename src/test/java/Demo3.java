@@ -20,13 +20,13 @@ record Product(String name, int price) implements Component {
 void main() {
   var registry = new ComponentRegistry();
   registry.register(lookup(), Product.class);
-  registry.registerFactory("App", _ -> () ->
+  registry.registerFactory("Cart", _ -> () ->
       $."""
       <table>
         <Product name="wood" price="\{10}"/>
         <Product name="cristal" price="\{300}"/>
       </table>
       """);
-  var app = registry.getComponent("App", Map.of());
-  System.out.println(app.render().toString(registry));
+  var cart = registry.getComponent("Cart", Map.of());
+  System.out.println(cart.render().toString(registry));
 }
