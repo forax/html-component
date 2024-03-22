@@ -8,9 +8,9 @@ import static java.lang.invoke.MethodHandles.lookup;
 record Product(String name, int price) implements Component {
   public Renderer render() {
     return $."""
-          <row class=".product">
+          <tr class=".product">
             <td>\{name}</td><td>\{price * 1.20}</td>
-          </row>
+          </tr>
           """;
   }
 }
