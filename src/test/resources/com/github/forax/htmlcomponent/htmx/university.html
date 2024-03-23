@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+     <title>University in France Demo using HTMX</title>
+     <script src="https://unpkg.com/htmx.org@1.9.11"></script>
+ </head>
+ <body>
+  <h2>University in France Demo using HTMX</h2>
+  <input type="text"
+         name="search"
+         placeholder="Search a game"
+         autocomplete="off"
+         hx-post="/api/university"
+         hx-target="#results"
+         hx-trigger="keyup changed delay:200ms"></input>
+  <div id="results"></div>
+ </body>
+</html>
