@@ -90,6 +90,7 @@ public final class ComponentTemplateProcessor implements StringTemplate.Processo
           }
           renderer.emitEvents(resolver, consumer);
         }
+        case null -> builder.append("null");
         case Object o -> builder.append(o);
       }
       current = matcher.end();
@@ -126,7 +127,7 @@ public final class ComponentTemplateProcessor implements StringTemplate.Processo
     var text = StringTemplate.of(fragments, holes).interpolate();
     var inputFactory = XMLInputFactory.newInstance();
     inputFactory.setProperty(XMLInputFactory.IS_COALESCING, true);
-    XMLEventReader reader;  // TODO, crate the DOM and cache it
+    XMLEventReader reader;  // TODO, create the DOM and cache it
     try {
       reader = inputFactory.createXMLEventReader(new StringReader(text));
     } catch (XMLStreamException e) {
@@ -140,7 +141,7 @@ public final class ComponentTemplateProcessor implements StringTemplate.Processo
         try {
           event = reader.nextEvent();
         } catch (XMLStreamException e) {
-          throw new NoSuchElementException(e);
+          throw new NoSuchElementException("error while parsing\n" + text, e);
         }
         switch (event) {
           case StartDocument _, EndDocument _ -> {}
