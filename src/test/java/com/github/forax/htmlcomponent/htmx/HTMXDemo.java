@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static com.github.forax.htmlcomponent.ComponentRegistry.getRegistry;
 import static com.github.forax.htmlcomponent.htmx.JExpress.*;
 import static java.lang.System.out;
 import static java.lang.invoke.MethodHandles.lookup;
@@ -84,8 +83,6 @@ public class HTMXDemo {
     var resources = Path.of(HTMXDemo.class.getResource(".").toURI());
     var universities = extractData(resources.resolve("university.json"));
 
-    var registry = getRegistry(lookup(), UniversityListView.class, UniversityView.class);
-
     var app = express();
     app.use(staticFiles(resources));
     app.post("/api/university", (request, response) -> {
@@ -93,7 +90,7 @@ public class HTMXDemo {
       var nameFilter = form.substring(form.indexOf('=') + 1);
       response
           .type("text/xml")
-          .send(new UniversityListView(universities, nameFilter).render().toString(registry));
+          .send(new UniversityListView(universities, nameFilter).render().asString());
     });
     app.listen(8080);
 

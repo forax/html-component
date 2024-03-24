@@ -1,9 +1,7 @@
 import com.github.forax.htmlcomponent.Component;
-import com.github.forax.htmlcomponent.ComponentRegistry;
 import com.github.forax.htmlcomponent.Renderer;
 
 import static com.github.forax.htmlcomponent.Component.$;
-import static java.lang.invoke.MethodHandles.lookup;
 
 record Product(String name, int price) implements Component {
   public Renderer render() {
@@ -16,8 +14,6 @@ record Product(String name, int price) implements Component {
 }
 
 void main() {
-  var registry = ComponentRegistry.getRegistry(lookup(), Product.class);
-
   Component cart = () ->
       $."""
       <table>
@@ -25,5 +21,5 @@ void main() {
         <Product name="cristal" price="\{300}"/>
       </table>
       """;
-  System.out.println(cart.render().toString(registry));
+  System.out.println(cart.render());
 }
