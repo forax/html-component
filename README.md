@@ -13,7 +13,7 @@ A html component is a record that implements the interface `Component` thus prov
 record HelloWorld(String name) implements Component {
   public Renderer render() {
     return $."""
-      <div>Hello \{ name } !</div>
+      <div>Hello \{name} !</div>
       """;
   } 
 }
@@ -49,7 +49,7 @@ record HelloList(List<HelloWorld> hellos) implements Component {
   public Renderer render() {
     return $."""
       <div>
-        \{ Renderer.list(hellos.stream()) }
+        \{ Renderer.from(hellos.stream()) }
       </div>
       """;
   }
