@@ -1,4 +1,4 @@
-package com.github.forax.htmlcomponent.htmx;
+package com.github.forax.test.htmx;
 
 import com.github.forax.htmlcomponent.Component;
 import com.github.forax.htmlcomponent.Renderer;
@@ -14,9 +14,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static com.github.forax.htmlcomponent.htmx.JExpress.*;
+import static com.github.forax.test.htmx.JExpress.*;
 import static java.lang.System.out;
-import static java.lang.invoke.MethodHandles.lookup;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class HTMXDemo {
@@ -31,7 +30,7 @@ public class HTMXDemo {
 
   private static final Pattern UNICODE_ESCAPE = Pattern.compile("\\\\u([0-9a-fA-F]{4})");
 
-  private static String clean(String text) {
+  private static String cleanData(String text) {
     return UNICODE_ESCAPE.matcher(text)
         .replaceAll(r -> new String(Character.toChars(Integer.parseInt(r.group(1), 16))));
   }
@@ -42,8 +41,8 @@ public class HTMXDemo {
     return json.stream()
         .filter(data -> data.get("implantation_lib") != null)
         .map(data -> new University(
-            clean((String) data.get("implantation_lib")).toLowerCase(Locale.ROOT),
-            clean((String) data.get("siege_lib")),
+            cleanData((String) data.get("implantation_lib")).toLowerCase(Locale.ROOT),
+            cleanData((String) data.get("siege_lib")),
             (String) data.get("date_ouverture"),
             (String) data.get("element_wikidata")
         ))
@@ -86,11 +85,12 @@ public class HTMXDemo {
     var app = express();
     app.use(staticFiles(resources));
     app.post("/api/university", (request, response) -> {
-      var form = URLDecoder.decode(request.bodyText(), UTF_8);
-      var nameFilter = form.substring(form.indexOf('=') + 1);
+      var formData = URLDecoder.decode(request.bodyText(), UTF_8);
+      var nameFilter = formData.substring(formData.indexOf('=') + 1);
+      var view = new UniversityListView(universities, nameFilter);
       response
           .type("text/xml")
-          .send(new UniversityListView(universities, nameFilter).render().asString());
+          .send(view.render().asString());
     });
     app.listen(8080);
 
