@@ -56,8 +56,9 @@ record HelloList(List<HelloWorld> hellos) implements Component {
 }
 ```
 
+Here are 3 more demos ([Demo.java](test/main/java/Demo.java), [Demo2.java](test/main/java/Demo2.java) and
+[DemoList.java](test/main/java/DemoList.java)).
 And that's all for the spec part.
-
 
 ## Using html components with htmx
 
