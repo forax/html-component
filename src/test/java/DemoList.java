@@ -13,9 +13,8 @@ record Product(String name, int price) implements Component {
   }
 }
 
-record Cart() implements Component {
+record Cart(List<Product> products) implements Component {
   public Renderer render() {
-    var products = List.of(new Product("wood", 10), new Product("jade", 50));
     return $."""
         <table>
         \{ Renderer.from(products.stream()) }
@@ -25,6 +24,7 @@ record Cart() implements Component {
 }
 
 void main() {
-  var cart = new Cart();
+  var products = List.of(new Product("wood", 10), new Product("jade", 50));
+  var cart = new Cart(products);
   System.out.println(cart.render());
 }
