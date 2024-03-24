@@ -3,8 +3,10 @@ import com.github.forax.htmlcomponent.ComponentRegistry;
 import com.github.forax.htmlcomponent.Renderer;
 import org.junit.jupiter.api.Test;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Map;
 
+import static com.github.forax.htmlcomponent.ComponentRegistry.getRegistry;
 import static java.lang.invoke.MethodHandles.lookup;
 
 record Product(String name, int price) implements Component {
@@ -29,9 +31,8 @@ record Cart() implements Component {
 }
 
 void main() {
-  var registry = new ComponentRegistry();
-  registry.register(lookup(), Cart.class, Product.class);
+  var registry = getRegistry(lookup(), Product.class);
 
-  var cart = registry.getComponent("Cart", Map.of());
+  var cart = new Cart();
   System.out.println(cart.render().toString(registry));
 }

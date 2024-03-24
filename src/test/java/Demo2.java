@@ -16,8 +16,7 @@ record Product(String name, int price) implements Component {
 }
 
 void main() {
-  var registry = new ComponentRegistry();
-  registry.register(lookup(), Product.class);
+  var registry = ComponentRegistry.getRegistry(lookup(), Product.class);
 
   Component cart = () ->
       $."""

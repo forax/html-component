@@ -7,35 +7,25 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import static java.lang.invoke.MethodType.methodType;
+import static java.util.stream.Collectors.toMap;
 
+/**
+ * Implementation of the interface {@link com.github.forax.htmlcomponent.Component.Resolver}
+ * that stores record ({@link Class}).
+ * <p>
+ * When {@link #getComponent(String, Map)}, the class corresponding to the name is instantiated
+ * by calling the canonical constructor of the record using the name of the record components.
+ * <p>
+ * This class is thread safe.
+ */
 public final class ComponentRegistry implements Component.Resolver {
-  private final ConcurrentHashMap<String, Function<Map<String, Object>, Component>> registry = new ConcurrentHashMap<>();
 
-  public ComponentRegistry() {}
+  private record RecordInfo(String name, Function<Map<String, Object>, Component> componentFactory) {}
 
-  public Component getComponent(String name, Map<String, Object> attributes) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(attributes);
-    var componentFactory = registry.get(name);
-    if (componentFactory == null) {
-      throw new IllegalStateException("unknown component factory for " + name);
-    }
-    return componentFactory.apply(attributes);
-  }
-
-  public void registerFactory(String name, Function<Map<String, Object>, Component> componentFactory) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(componentFactory);
-    if (registry.putIfAbsent(name, componentFactory) != null) {
-      throw new IllegalStateException("a component with the name " + name + " is already registered");
-    }
-  }
-
-  public void register(Lookup lookup, Class<? extends Record> recordClass) {
+  private static  RecordInfo createRecordInfo(Lookup lookup, Class<?> recordClass) {
     Objects.requireNonNull(lookup);
     Objects.requireNonNull(recordClass);
     var recordComponents = recordClass.getRecordComponents();
@@ -56,7 +46,7 @@ public final class ComponentRegistry implements Component.Resolver {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw new IllegalStateException(e);
     }
-    registerFactory(recordClass.getSimpleName(), attributes -> {
+    return new RecordInfo(recordClass.getSimpleName(), attributes -> {
       var array = new Object[parameterNames.length];
       for(var i = 0; i < array.length; i++) {
         array[i] = attributes.get(parameterNames[i]);
@@ -71,12 +61,37 @@ public final class ComponentRegistry implements Component.Resolver {
     });
   }
 
+  private final Map<String, Function<Map<String, Object>, Component>> reguistryMap;
+
+  private ComponentRegistry(Map<String, Function<Map<String, Object>, Component>> reguistryMap) {
+    this.reguistryMap = reguistryMap;
+  }
+
+  @Override
+  public Component getComponent(String name, Map<String, Object> attributes) {
+    Objects.requireNonNull(name);
+    Objects.requireNonNull(attributes);
+    var componentFactory = reguistryMap.get(name);
+    if (componentFactory == null) {
+      throw new IllegalStateException("unknown component factory for " + name);
+    }
+    return componentFactory.apply(attributes);
+  }
+
+  /**
+   * Creates a registry configured with the record classes.
+   *
+   * @param lookup a lookup able to call the constructor of the record classes
+   * @param recordClasses the record classes.
+   * @return a new registry configured with the record classes
+   */
   @SafeVarargs
-  public final void register(Lookup lookup, Class<? extends Record>... recordClasses) {
+  public static ComponentRegistry getRegistry(Lookup lookup, Class<? extends Record>... recordClasses) {
     Objects.requireNonNull(lookup);
     Objects.requireNonNull(recordClasses);
-    for(var recordClass: recordClasses) {
-      register(lookup, recordClass);
-    }
+    var registryMap = Arrays.stream(recordClasses)
+        .map(recordClass -> createRecordInfo(lookup, recordClass))
+        .collect(toMap(RecordInfo::name, RecordInfo::componentFactory));
+    return new ComponentRegistry(registryMap);
   }
 }

@@ -1,7 +1,6 @@
 package com.github.forax.htmlcomponent.htmx;
 
 import com.github.forax.htmlcomponent.Component;
-import com.github.forax.htmlcomponent.ComponentRegistry;
 import com.github.forax.htmlcomponent.Renderer;
 
 import java.io.IOException;
@@ -15,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import static com.github.forax.htmlcomponent.ComponentRegistry.getRegistry;
 import static com.github.forax.htmlcomponent.htmx.JExpress.*;
 import static java.lang.System.out;
 import static java.lang.invoke.MethodHandles.lookup;
@@ -84,8 +84,7 @@ public class HTMXDemo {
     var resources = Path.of(HTMXDemo.class.getResource(".").toURI());
     var universities = extractData(resources.resolve("university.json"));
 
-    var registry = new ComponentRegistry();
-    registry.register(lookup(), UniversityListView.class, UniversityView.class);
+    var registry = getRegistry(lookup(), UniversityListView.class, UniversityView.class);
 
     var app = express();
     app.use(staticFiles(resources));
