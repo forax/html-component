@@ -1,5 +1,3 @@
-package com.github.forax.test.htmx;
-
 import com.github.forax.htmlcomponent.Component;
 import com.github.forax.htmlcomponent.Renderer;
 
@@ -14,10 +12,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static com.github.forax.test.htmx.JExpress.*;
 import static java.lang.System.out;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+// java --enable-preview --source 22 --class-path /Users/forax/git/html-component/target/html-component-1.0-SNAPSHOT.jar HTMXDemo.java
 public class HTMXDemo {
   record University(String name, String headquarter, String creation, String wikiurl) {
     University {
@@ -36,6 +34,7 @@ public class HTMXDemo {
   }
 
   private static List<University> extractData(Path path) throws IOException {
+    @SuppressWarnings("unchecked")
     var json = (List<Map<String, Object>>) JExpress.ToyJSONParser.parse(Files.readString(path));
     //out.println(json);
     return json.stream()
@@ -79,11 +78,15 @@ public class HTMXDemo {
   }
 
   void main() throws URISyntaxException, IOException {
-    var resources = Path.of(HTMXDemo.class.getResource(".").toURI());
+    var root = Path.of(HTMXDemo.class.getResource(".").toURI());
+    var resources = root.resolve("../resources");
+    if (!Files.isDirectory(resources)) {
+      resources = root;
+    }
     var universities = extractData(resources.resolve("university.json"));
 
-    var app = express();
-    app.use(staticFiles(resources));
+    var app = JExpress.express();
+    app.use(JExpress.staticFiles(resources));
     app.post("/api/university", (request, response) -> {
       var formData = URLDecoder.decode(request.bodyText(), UTF_8);
       var nameFilter = formData.substring(formData.indexOf('=') + 1);

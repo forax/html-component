@@ -65,7 +65,15 @@ And that's all for the spec part.
 Html components are a good fit for [htmx](https://htmx.org/) because it's an easy way to create XML fragments
 that can be downloaded and patched by the JavaScript library htmx.
 
-[HTMXDemo](src/test/java/com/github/forax/test/htmx/HTMXDemo.java) shows how html components can be used
+[HTMXDemo](src/test/java/HTMXDemo.java) shows how html components can be used
 in the context of htmx. The demo using a Java port of the Express.js library
-([JExpress.java](src/test/java/com/github/forax/test/htmx/JExpress.java))
+([JExpress.java](src/test/JExpress.java))
 but this is not a requirement, it makes just the demo code simpler than using Spring Boot.
+
+To run the demo with Java 22, after calling `mvn package` :
+```java
+  cd src/test/java
+  java --enable-preview --source 22 --class-path ../../../target/*.jar HTMXDemo.java
+```
+and in the browser `http://localhost:8080/university`
+
