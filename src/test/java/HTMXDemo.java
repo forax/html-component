@@ -15,7 +15,8 @@ import java.util.regex.Pattern;
 import static java.lang.System.out;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-// java --enable-preview --source 22 --class-path /Users/forax/git/html-component/target/html-component-1.0-SNAPSHOT.jar HTMXDemo.java
+// cd src/test/java
+// java --enable-preview --source 22 --class-path ../../../target/*.jar HTMXDemo.java
 public class HTMXDemo {
   record University(String name, String headquarter, String creation, String wikiurl) {
     University {
