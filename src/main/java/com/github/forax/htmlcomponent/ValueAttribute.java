@@ -1,4 +1,4 @@
-package com.github.forax.htmlcomponent.internal;
+package com.github.forax.htmlcomponent;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;

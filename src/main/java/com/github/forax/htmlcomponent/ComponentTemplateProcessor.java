@@ -1,7 +1,4 @@
-package com.github.forax.htmlcomponent.internal;
-
-import com.github.forax.htmlcomponent.Component;
-import com.github.forax.htmlcomponent.Renderer;
+package com.github.forax.htmlcomponent;
 
 import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLEventReader;
@@ -35,6 +32,8 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
+import static java.lang.StackWalker.Option.DROP_METHOD_INFO;
+import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
 import static java.lang.invoke.MethodType.methodType;
 import static java.util.stream.Collectors.toMap;
 
@@ -42,14 +41,14 @@ import static java.util.stream.Collectors.toMap;
  * A template processor that takes a template string formatted in XML and create the corresponding {@link Renderer}.
  * see Component
  */
-public final class ComponentTemplateProcessor implements StringTemplate.Processor<Renderer, RuntimeException> {
+final class ComponentTemplateProcessor implements StringTemplate.Processor<Renderer, RuntimeException> {
   private static final Pattern HOLE = Pattern.compile("\\$hole([0-9]+)\\$");
 
   private static final String PACKAGE_NAME = ComponentTemplateProcessor.class.getPackageName();
   private static final StackWalker STACK_WALKER =
-      StackWalker.getInstance(Set.of(StackWalker.Option.RETAIN_CLASS_REFERENCE, StackWalker.Option.DROP_METHOD_INFO));
+      StackWalker.getInstance(Set.of(RETAIN_CLASS_REFERENCE, DROP_METHOD_INFO));
   private static final ClassValue<BiFunction<String, Map<String, Object>, Component>> FACTORY_CACHE =
-      new ClassValue<BiFunction<String, Map<String, Object>, Component>>() {
+      new ClassValue<>() {
         @Override
         protected BiFunction<String, Map<String, Object>, Component> computeValue(Class<?> nestHost) {
           var lookup = MethodHandles.lookup();
@@ -57,7 +56,7 @@ public final class ComponentTemplateProcessor implements StringTemplate.Processo
           try {
             nestHostLookup = MethodHandles.privateLookupIn(nestHost, lookup);
           } catch (IllegalAccessException e) {
-            throw (IllegalAccessError) new IllegalAccessError("the package of the class " + nestHost.getName() + " is not open").initCause(e);
+            throw (IllegalAccessError) new IllegalAccessError("Package of class " + nestHost.getName() + " is not open").initCause(e);
           }
           var registryMap = Arrays.stream(nestHost.getNestMembers())
               .filter(Class::isRecord)
@@ -68,7 +67,7 @@ public final class ComponentTemplateProcessor implements StringTemplate.Processo
           return (name, attributes) -> {
             var componentFactory = registryMap.get(name);
             if (componentFactory == null) {
-              throw new IllegalStateException("unknown component factory for " + name);
+              throw new IllegalStateException("Unknown component " + name);
             }
             return componentFactory.apply(attributes);
           };
@@ -89,7 +88,7 @@ public final class ComponentTemplateProcessor implements StringTemplate.Processo
           .asSpreader(Object[].class, parameterTypes.length)
           .asType(methodType(Component.class, Object[].class));
     } catch (NoSuchMethodException | IllegalAccessException e) {
-      throw new IllegalStateException(e);
+      throw new IllegalStateException("Cannot find canonical constructor", e);
     }
     return attributes -> {
       var array = new Object[parameterNames.length];
@@ -107,10 +106,7 @@ public final class ComponentTemplateProcessor implements StringTemplate.Processo
   }
 
   private static boolean startsWithAnUpperCase(String name) {
-    if (name.isEmpty()) {
-      return false;
-    }
-    return Character.isUpperCase(name.charAt(0));
+    return !name.isEmpty() && Character.isUpperCase(name.charAt(0));
   }
 
   private record AttributeRewriterIterator(Iterator<Attribute> iterator,

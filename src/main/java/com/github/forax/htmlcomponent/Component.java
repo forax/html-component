@@ -1,7 +1,5 @@
 package com.github.forax.htmlcomponent;
 
-import com.github.forax.htmlcomponent.internal.ComponentTemplateProcessor;
-
 import java.io.Writer;
 
 /**
