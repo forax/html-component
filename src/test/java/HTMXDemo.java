@@ -70,8 +70,8 @@ public class HTMXDemo {
            </tr>
             \{
                Renderer.from(universities.stream()
-                   .map(u -> new UniversityView(u.name, u.headquarter, u.creation, u.wikiurl))
-                   .filter(u -> u.name.contains(nameFilter)))
+                   .filter(u -> u.name.contains(nameFilter))
+                   .map(u -> new UniversityView(u.name, u.headquarter, u.creation, u.wikiurl)))
              }
           </table>
           """;
