@@ -56,8 +56,8 @@ record HelloList(List<HelloWorld> hellos) implements Component {
 }
 ```
 
-Here are 3 more demos ([Demo.java](test/main/java/Demo.java), [Demo2.java](test/main/java/Demo2.java) and
-[DemoList.java](test/main/java/DemoList.java)).
+Here are 3 more demos ([Demo.java](src/test/java/Demo.java), [Demo2.java](src/test/java/Demo2.java) and
+[DemoList.java](src/test/java/DemoList.java)).
 And that's all for the spec part.
 
 ## Using html components with htmx
@@ -67,7 +67,7 @@ that can be downloaded and patched by the JavaScript library htmx.
 
 [HTMXDemo](src/test/java/HTMXDemo.java) shows how html components can be used
 in the context of htmx. The demo using a Java port of the Express.js library
-([JExpress.java](src/test/JExpress.java))
+([JExpress.java](src/test/java/JExpress.java))
 but this is not a requirement, it makes just the demo code simpler than using Spring Boot.
 
 To run the demo with Java 22, after calling `mvn package` :
