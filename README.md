@@ -55,7 +55,7 @@ record HelloList(List<HelloWorld> hellos) implements Component {
   }
 }
 ```
-https://github.com/forax/html-component/blob/master/src/test/java/Demo.java
+
 Here are 3 more demos ([Demo.java](src/test/java/Demo.java), [Demo2.java](src/test/java/Demo2.java) and
 [DemoList.java](src/test/java/DemoList.java)).
 And that's all for the spec part.
